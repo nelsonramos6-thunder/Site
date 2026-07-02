@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MED HEALTH IA</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <div class="background">
+        <div class="circle c1"></div>
+        <div class="circle c2"></div>
+    </div>
+
+    <div class="container">
+
+        <img src="img/logo-med-health.png.png" class="logo" alt="MED HEALTH IA">
+         
+        <div id="response" class="response"></div>
+
+        <div class="quick-replies">
+            <button class="quick-btn" onclick="sendQuickReply('Quais são as especialidades atendidas no ambulatório?')">🩺 Especialidades</button>
+            <button class="quick-btn" onclick="sendQuickReply('Como faço para agendar uma consulta?')">📅 Agendamentos</button>
+            <button class="quick-btn" onclick="sendQuickReply('Quais documentos preciso levar para o atendimento?')">🪪 Documentos necessários</button>
+            <button class="quick-btn" onclick="sendQuickReply('Quais são os horários de funcionamento?')">🕒 Horários</button>
+        </div>
+
+        <div class="chat-box">
+            <input type="text" id="question" class="chat-input" placeholder="Informe seu nome e pergunte à MED HEALTH">
+            <button class="send" onclick="askAI()">➜</button>
+        </div>
+
+        <div class="chat-actions">
+            <button id="clear-btn" class="clear-history-btn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6"/>
+                </</svg>
+                Limpar Histórico e Voltar ao Início
+            </button>
+        </div>
+
+    </div>
+
+    <script src="js/script.js"></script>
+</body>
+</html>

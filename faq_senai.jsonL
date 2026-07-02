@@ -1,0 +1,26 @@
+const jsonlData = [
+'{"role": "system", "content": "Assistente virtual baseado no FAQ oficial do SENAI-SP."}',
+'{"role": "user", "content": "Como posso corrigir ou atualizar meus dados cadastrais ou alterar meu e-mail?"}',
+'{"role": "assistant", "content": "Entre em contato diretamente com a unidade do SENAI-SP mais próxima de sua residência."}',
+'{"role": "user", "content": "Quais são os cursos oferecidos pelo SENAI em São Paulo e como faço para me inscrever?"}',
+'{"role": "assistant", "content": "Oferecemos cursos técnicos, livres, de aprendizagem industrial e superiores. Inscrições em sp.senai.br."}',
+'{"role": "user", "content": "SENAI é gratuito, oferece bolsa de estudos ou quanto custa um curso?"}',
+'{"role": "assistant", "content": "Os cursos Técnicos e de Aprendizagem Industrial são gratuitos. Cursos superiores têm bolsas parciais."}',
+'{"role": "user", "content": "O que são cursos técnicos e quem pode fazer?"}',
+'{"role": "assistant", "content": "Capacitação para a indústria. Exige estar na 1ª série do Ensino Médio ou concluído (para o turno da noite)."}',
+'{"role": "user", "content": "Qual a diferença entre curso técnico e tecnólogo?"}',
+'{"role": "assistant", "content": "Técnico é de nível médio (até 2 anos). Tecnólogo é graduação de nível superior (2 a 3 anos)."}',
+'{"role": "user", "content": "O que são cursos de aprendizagem industrial e quem pode fazer?"}',
+'{"role": "assistant", "content": "Qualificação industrial para jovens de 14 a 24 anos incompletos, com processo seletivo integrado."}',
+'{"role": "user", "content": "Cursos técnicos semipresenciais SENAI: como funcionam?"}',
+'{"role": "assistant", "content": "A carga horária é dividida em 80% realizada a distância (EAD) e 20% realizada presencialmente na unidade."}',
+'{"role": "user", "content": "Existe curso online gratuito no SENAI?"}',
+'{"role": "assistant", "content": "Sim, formações totalmente online e gratuitas estão disponíveis para inscrição no site online.sp.senai.br."}',
+'{"role": "user", "content": "Como acessar informações e certificados de cursos concluídos?"}',
+'{"role": "assistant", "content": "Para cursos livres e CAI pós-2004, acesse secretariadigital.sp.senai.br. Outros, fale com a unidade."}',
+'{"role": "user", "content": "Como trabalhar no SENAI-SP ou ingressar no programa de trainee?"}',
+'{"role": "assistant", "content": "Todos os processos seletivos e editais ocorrem exclusivamente através da plataforma sesisenaisp.jobs.recrut.ai."}',
+'{"role": "user", "content": "Quais serviços o SENAI oferece para empresas e as jornadas digitais/sustentáveis?"}',
+'{"role": "assistant", "content": "Oferecemos P&D, laboratórios e consultorias gratuitas de transformação digital e descarbonização para indústrias."}'
+];
+const addJsonl = (role, content) => jsonlData.push(JSON.stringify({ role, content }));
