@@ -35,6 +35,7 @@ body {
     position: fixed;
     inset: 0;
     z-index: -1;
+    pointer-events: none; /* Garante que os círculos não atrapalhem cliques */
 }
 
 .circle {
@@ -76,6 +77,7 @@ body {
     gap: 20px;
     background: rgba(255, 255, 255, 0.4); /* Efeito Glassmorphism sutil */
     backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px); /* Suporte para Safari antigo */
     border: 1px solid rgba(255, 255, 255, 0.6);
     border-radius: 24px;
     padding: 25px;
@@ -126,7 +128,8 @@ body {
     border-radius: 20px;
     font-size: 15px;
     line-height: 1.6;
-    max-width: 75%;
+    max-width: 85%; /* Um pouco mais largo para melhor leitura */
+    word-break: break-word; /* Evita que textos longos quebrem o layout */
     animation: fadeIn 0.3s ease forwards;
 }
 
@@ -138,13 +141,13 @@ body {
 .user-message {
     background-color: var(--bg-user);
     align-self: flex-end; 
-    border-bottom-right-radius: 4px; /* Efeito cauda */
+    border-bottom-right-radius: 4px; /* Efeito cauda direito */
 }
 
 .ai-message {
     background-color: var(--bg-ai);
     align-self: flex-start;
-    border-top-left-radius: 4px; /* Efeito cauda */
+    border-bottom-left-radius: 4px; /* Ajustado para o canto inferior para consistência */
 }
 
 .message-header {
@@ -174,7 +177,15 @@ body {
     align-items: center;
     border-radius: 30px;
     padding: 6px 12px;
+    border: 1px solid #e2e8f0; /* Borda sutil padrão */
     box-shadow: 0 8px 25px rgba(0,0,0,.04);
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+/* Efeito visual quando o usuário clica na caixa de texto */
+.chat-box:focus-within {
+    border-color: #a5d8ff;
+    box-shadow: 0 0 0 3px rgba(0, 168, 255, 0.15);
 }
 
 .chat-input {
@@ -201,6 +212,7 @@ body {
     justify-content: center;
     align-items: center;
     align-self: center; 
+    flex-shrink: 0; /* Evita que o botão amasse em telas pequenas */
 }
 
 .send:hover {
@@ -313,4 +325,23 @@ body {
 @keyframes bounce {
     0%, 80%, 100% { transform: scale(0); }
     40% { transform: scale(1); }
+}
+
+/* ==========================================================================
+   MEDIA QUERIES (RESPONSIVIDADE EXTRA)
+   ========================================================================== */
+@media (max-width: 600px) {
+    body {
+        padding: 10px;
+    }
+    .container {
+        padding: 15px;
+        gap: 15px;
+    }
+    .response {
+        padding: 15px;
+    }
+    .message {
+        max-width: 95%; /* Aproveita melhor a tela no celular */
+    }
 }

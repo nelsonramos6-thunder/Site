@@ -1,5 +1,4 @@
 // --- VARIÁVEL GLOBAL DE CONTEXTO ---
-// Mantém a memória da conversa ativa. Iniciada com as diretrizes do sistema.
 let chatContext = [
     {
         role: "system",
@@ -7,6 +6,107 @@ let chatContext = [
     }
 ];
 
+// --- FUNÇÃO DE SÍNTESE DE VOZ (AZURE TEXT-TO-SPEECH) ---
+async function synthesizeSpeech(textToSpeak) {
+    try {
+        // 1. Carrega as credenciais do keys.json
+        const keysResponse = await fetch('./keys.json');
+        if (!keysResponse.ok) throw new Error("Erro ao carregar keys.json para síntese");
+        const keys = await keysResponse.json();
+
+        // 2. Configura o serviço de voz da Azure
+        const speechConfig = SpeechSDK.SpeechConfig.fromSubscription(keys.AZURE_SPEECH_KEY, keys.AZURE_SPEECH_REGION);
+        
+        // Configura uma voz profissional em Português do Brasil (Ex: Francisca ou Antonio)
+        speechConfig.speechSynthesisVoiceName = "pt-BR-FranciscaNeural"; 
+
+        const audioConfig = SpeechSDK.AudioConfig.fromDefaultSpeakerOutput();
+        const synthesizer = new SpeechSDK.SpeechSynthesizer(speechConfig, audioConfig);
+
+        // 3. Executa a fala
+        synthesizer.speakTextAsync(
+            textToSpeak,
+            result => {
+                if (result.reason === SpeechSDK.ResultReason.SynthesizingAudioCompleted) {
+                    console.log("Síntese de voz concluída com sucesso.");
+                } else {
+                    console.error("Falha na síntese de voz:", result.errorDetails);
+                }
+                synthesizer.close();
+            },
+            err => {
+                console.error("Erro na síntese de voz Azure:", err);
+                synthesizer.close();
+            }
+        );
+
+    } catch (error) {
+        console.error("Erro ao configurar a síntese de voz da Azure:", error);
+    }
+}
+
+// --- FUNÇÃO DE RECONHECIMENTO DE VOZ (AZURE SPEECH) ---
+async function startVoiceRecognition() {
+    const voiceBtn = document.getElementById('voice-btn');
+    const questionInput = document.getElementById('question');
+
+    try {
+        // 1. Carrega as credenciais do keys.json
+        const keysResponse = await fetch('./keys.json');
+        if (!keysResponse.ok) throw new Error("Erro ao carregar keys.json");
+        const keys = await keysResponse.json();
+
+        // 2. Configura o serviço de fala da Azure (padrão em Português do Brasil)
+        const speechConfig = SpeechSDK.SpeechConfig.fromSubscription(keys.AZURE_SPEECH_KEY, keys.AZURE_SPEECH_REGION);
+        speechConfig.speechRecognitionLanguage = "pt-BR";
+
+        const audioConfig = SpeechSDK.AudioConfig.fromDefaultMicrophoneInput();
+        const recognizer = new SpeechSDK.SpeechRecognizer(speechConfig, audioConfig);
+
+        // Feedback visual no botão enquanto ele escuta
+        if (voiceBtn) {
+            voiceBtn.innerText = "Ouvindo...";
+            voiceBtn.disabled = true;
+        }
+
+        // 3. Inicia a captura da fala (reconhece uma única frase longa)
+        recognizer.recognizeOnceAsync(
+            result => {
+                if (result.reason === SpeechSDK.ResultReason.RecognizedSpeech) {
+                    console.log(`Texto reconhecido: ${result.text}`);
+                    
+                    if (questionInput) {
+                        questionInput.value = result.text; // Coloca o texto no input
+                        askAI(); // Dispara automaticamente a resposta da IA
+                    }
+                } else {
+                    alert("Não entendi o que você disse. Por favor, tente novamente.");
+                }
+
+                // Reseta o estado do botão
+                if (voiceBtn) {
+                    voiceBtn.innerText = "🎤 Falar";
+                    voiceBtn.disabled = false;
+                }
+                recognizer.close();
+            },
+            err => {
+                console.error("Erro no reconhecimento de voz:", err);
+                if (voiceBtn) {
+                    voiceBtn.innerText = "🎤 Falar";
+                    voiceBtn.disabled = false;
+                }
+                recognizer.close();
+            }
+        );
+
+    } catch (error) {
+        console.error("Erro ao configurar o Azure Speech:", error);
+        alert("Erro ao iniciar o serviço de voz.");
+    }
+}
+
+// --- FUNÇÃO PRINCIPAL DE ENVIO PARA O AZURE OPENAI ---
 async function askAI() {
     const questionInput = document.getElementById('question');
     const responseDiv = document.getElementById('response');
@@ -18,19 +118,16 @@ async function askAI() {
 
     const questionText = questionInput.value.trim();
 
-    // 1. Validação simples para não enviar campo vazio
     if (!questionText) {
         alert("Por favor, digite uma pergunta!");
         return;
     }
 
-    // --- ADICIONA A PERGUNTA DO USUÁRIO NO HISTÓRICO DA TELA ---
     const userMessageDiv = document.createElement('div');
     userMessageDiv.className = 'message user-message';
     userMessageDiv.innerHTML = `<strong>👤 Usuário:</strong> <p>${questionText}</p>`;
     responseDiv.appendChild(userMessageDiv);
 
-    // --- CRIA O BALÃO DE RESPOSTA DA IA COM ANIMAÇÃO LOADER ---
     const aiMessageDiv = document.createElement('div');
     aiMessageDiv.className = 'message ai-message';
     aiMessageDiv.innerHTML = `
@@ -40,17 +137,11 @@ async function askAI() {
         </div>
     `;
     responseDiv.appendChild(aiMessageDiv);
-
-    // Rola a tela automaticamente para a última mensagem
     responseDiv.scrollTop = responseDiv.scrollHeight;
 
-    // Limpa o campo de entrada para a próxima pergunta
     questionInput.value = "";
-
-    // 2. Alimenta a memória/contexto com a nova pergunta do usuário
     chatContext.push({ role: "user", content: questionText });
 
-    // 4. Estrutura da requisição utilizando a memória acumulada (chatContext)
     const data = {
         model: "gpt-5.4", 
         messages: chatContext, 
@@ -58,17 +149,13 @@ async function askAI() {
     };
 
     try {
-        // --- EXTRAÇÃO DAS CREDENCIAIS DO ARQUIVO KEYS.JSON ---
         const keysResponse = await fetch('./keys.json');
-        if (!keysResponse.ok) {
-            throw new Error("Não foi possível carregar as chaves de configuração do arquivo keys.json");
-        }
+        if (!keysResponse.ok) throw new Error("Não foi possível carregar o arquivo keys.json");
         const keys = await keysResponse.json();
         
         const apiKey = keys.AZURE_OPENAI_KEY;
         const url = keys.AZURE_OPENAI_ENDPOINT;
 
-        // 5. Chamada de rede via Fetch API
         const response = await fetch(url, {
             method: "POST",
             headers: {
@@ -86,21 +173,23 @@ async function askAI() {
         const result = await response.json();
         const aiResponse = result.choices[0].message.content;
         
-        // --- ADICIONA A RESPOSTA DA IA À MEMÓRIA DO CONTEXTO ---
         chatContext.push({ role: "assistant", content: aiResponse });
 
-        // --- SUBSTITUI O LOADER PELA RESPOSTA REAL DA IA ---
         aiMessageDiv.innerHTML = `<strong>🏥 MED HEALTH IA:</strong> <p></p>`;
         aiMessageDiv.querySelector('p').innerText = aiResponse;
 
+        // --- INTEGRAÇÃO DA FALA: Ativa a escuta assim que o texto é exibido ---
+        synthesizeSpeech(aiResponse);
+
     } catch (error) {
         console.error("Erro detalhado na requisição:", error);
-        // Em caso de erro, remove o loader e exibe o aviso
         aiMessageDiv.innerHTML = `<strong>🏥 MED HEALTH IA:</strong> <p></p>`;
         aiMessageDiv.querySelector('p').innerText = "Desculpe, a MED HEALTH IA encontrou um erro ao processar sua solicitação.";
+        
+        // Fala o aviso de erro para manter a acessibilidade por voz ativa
+        synthesizeSpeech("Desculpe, a MED HEALTH IA encontrou um erro ao processar sua solicitação.");
     }
 
-    // Garante que a rolagem acompanhe o fim do texto
     responseDiv.scrollTop = responseDiv.scrollHeight;
 }
 
@@ -109,8 +198,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const questionInput = document.getElementById('question');
     const clearBtn = document.getElementById('clear-btn');
     const responseDiv = document.getElementById('response');
+    const voiceBtn = document.getElementById('voice-btn'); // Elemento do botão de voz
 
-    // 1. Vincula a tecla Enter do teclado ao input
+    // 1. Vincula o botão de voz à função do Azure Speech
+    if (voiceBtn) {
+        voiceBtn.addEventListener("click", startVoiceRecognition);
+    }
+
+    // 2. Vincula a tecla Enter do teclado ao input
     if (questionInput) {
         questionInput.addEventListener("keydown", function(event) {
             if (event.key === "Enter") {
@@ -120,13 +215,10 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // 2. Função para o botão de limpar histórico e voltar ao início
+    // 3. Função para o botão de limpar histórico
     if (clearBtn && responseDiv) {
         clearBtn.addEventListener("click", () => {
-            // Limpa todas as mensagens da tela
             responseDiv.innerHTML = "";
-
-            // --- RESETA A MEMÓRIA GLOBAL DO CONTEXTO ---
             chatContext = [
                 {
                     role: "system",
@@ -134,26 +226,23 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             ];
 
-            // Adiciona uma mensagem acolhedora de reinício da IA
             const welcomeMessage = document.createElement('div');
             welcomeMessage.className = 'message ai-message';
             welcomeMessage.innerHTML = `<strong>🏥 MED HEALTH IA:</strong> <p>Histórico limpo! Como posso ajudar você agora?</p>`;
             responseDiv.appendChild(welcomeMessage);
             
-            // Foca novamente o campo de texto para o usuário digitar
+            // Fala a mensagem de boas-vindas ao limpar o chat
+            synthesizeSpeech("Histórico limpo! Como posso ajudar você agora?");
+            
             if (questionInput) questionInput.focus();
         });
     }
 });
 
-// --- FUNÇÃO PARA ENVIAR RESPOSTA RÁPIDA ---
 function sendQuickReply(text) {
     const questionInput = document.getElementById('question');
     if (questionInput) {
-        // 1. Preenche o campo de texto com a pergunta do botão
         questionInput.value = text;
-        
-        // 2. Dispara a função principal que envia para a IA
         askAI();
     }
 }

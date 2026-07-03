@@ -19,5 +19,5 @@ Como o projeto faz requisições assíncronas locais (`fetch('./keys.json')`), v
 
 ### 1. Clonar o Repositório
 ```bash
-git clone [https://github.com/seu-usuario/seu-repositorio.git](https://github.com/seu-usuario/seu-repositorio.git)
+git clone [https://github.com/nelsonramos6-thunder/Site](https://github.com/seu-usuario/seu-repositorio.git)
 cd seu-repositorio
